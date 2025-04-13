@@ -53,7 +53,7 @@ function Register() {
 
       // Redirect to login page after successful registration
       setTimeout(() => {
-        navigate("/login"); // Redirect to the login page using useNavigate
+        navigate("/"); // Redirect to the login page using useNavigate
       }, 2000); // Delay of 2 seconds before redirecting
     } catch (err) {
       // Handle errors if any (e.g., user already exists)
@@ -114,7 +114,7 @@ function Register() {
         </form>
         <p className="mt-6 text-md text-center text-gray-600">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-500 hover:underline">
+          <Link to="/" className="text-blue-500 hover:underline">
             Login
           </Link>
         </p>
