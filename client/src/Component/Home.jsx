@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Home = () => {
   const [todo, setTodo] = useState({
@@ -13,20 +14,68 @@ const Home = () => {
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All");
 
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/tasks");
+      setTodos(response.data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  // Fetch tasks on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
   const handleChange = (e) => {
     setTodo({ ...todo, [e.target.name]: e.target.value });
   };
 
-  const handleAddTodo = () => {
-    setTodos([...todos, todo]);
-    setTodo({
-      title: "",
-      description: "",
-      date: "",
-      priority: "Medium",
-      status: "Pending",
-      progress: "0%",
-    });
+  const handleAddTodo = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/tasks", todo);
+      setTodos([...todos, response.data]);
+      setTodo({
+        title: "",
+        description: "",
+        date: "",
+        priority: "Medium",
+        status: "Pending",
+        progress: "0%",
+      });
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
+  };
+
+  // Delete task
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/tasks/${id}`);
+      setTodos(todos.filter((task) => task._id !== id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  // Update task
+  const handleUpdate = async (id) => {
+    try {
+      const updatedTask = { ...todo };
+      const response = await axios.put(
+        `http://localhost:5000/tasks/${id}`,
+        updatedTask
+      );
+      setTodos(
+        todos.map((task) =>
+          task._id === id ? { ...task, ...response.data } : task
+        )
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
   const filteredTodos = todos.filter((item) => {
@@ -142,24 +191,39 @@ const Home = () => {
                 <th className="py-3 px-4 text-left">Status</th>
                 <th className="py-3 px-4 text-left">Priority</th>
                 <th className="py-3 px-4 text-left">Progress</th>
+                <th className="py-3 px-4 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredTodos.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center p-4 text-gray-500">
+                  <td colSpan="7" className="text-center p-4 text-gray-500">
                     No tasks found.
                   </td>
                 </tr>
               ) : (
-                filteredTodos.map((task, index) => (
-                  <tr key={index} className="border-b">
+                filteredTodos.map((task) => (
+                  <tr key={task._id} className="border-b">
                     <td className="py-2 px-4">{task.title}</td>
                     <td className="py-2 px-4">{task.description}</td>
                     <td className="py-2 px-4">{task.date}</td>
                     <td className="py-2 px-4">{task.status}</td>
                     <td className="py-2 px-4">{task.priority}</td>
                     <td className="py-2 px-4">{task.progress}</td>
+                    <td className="py-2 px-4">
+                      <button
+                        onClick={() => handleDelete(task._id)}
+                        className="bg-red-500 text-white py-1 px-3 rounded mr-2"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => handleUpdate(task._id)}
+                        className="bg-yellow-500 text-white py-1 px-3 rounded"
+                      >
+                        Update
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
