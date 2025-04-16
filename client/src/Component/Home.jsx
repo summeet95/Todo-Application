@@ -10,22 +10,34 @@ const Home = () => {
     status: "Pending",
     progress: "0%",
   });
+
   const [todos, setTodos] = useState([]);
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All");
-  const [currentUpdateId, setCurrentUpdateId] = useState(null); // Track the current task being updated
+  const [currentUpdateId, setCurrentUpdateId] = useState(null);
 
-  // Fetch tasks from API
+  const LOCAL_STORAGE_KEY = "myTaskList";
+
+  // Save tasks to local storage
+  const saveToLocalStorage = (tasks) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+  };
+
+  // Fetch tasks from API or localStorage
   const fetchTasks = async () => {
     try {
       const response = await axios.get("http://localhost:5000/api/tasks");
       setTodos(response.data);
+      saveToLocalStorage(response.data);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("API error, loading from local storage:", error);
+      const savedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedTasks) {
+        setTodos(JSON.parse(savedTasks));
+      }
     }
   };
 
-  // Fetch tasks on component mount
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -37,69 +49,61 @@ const Home = () => {
   const handleAddTodo = async () => {
     try {
       const response = await axios.post("http://localhost:5000/tasks", todo);
-      setTodos([...todos, response.data]);
-      setTodo({
-        title: "",
-        description: "",
-        date: "",
-        priority: "Medium",
-        status: "Pending",
-        progress: "0%",
-      });
+      const updatedTasks = [...todos, response.data];
+      setTodos(updatedTasks);
+      saveToLocalStorage(updatedTasks);
+      resetForm();
     } catch (error) {
       console.error("Error adding task:", error);
     }
   };
 
-  // Delete task
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/tasks/${id}`);
-      setTodos(todos.filter((task) => task._id !== id));
+      const updatedTasks = todos.filter((task) => task._id !== id);
+      setTodos(updatedTasks);
+      saveToLocalStorage(updatedTasks);
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
 
-  // Update task
-  const handleUpdate = async (id) => {
+  const handleUpdate = (id) => {
     const taskToUpdate = todos.find((task) => task._id === id);
-    setTodo({
-      title: taskToUpdate.title,
-      description: taskToUpdate.description,
-      date: taskToUpdate.date,
-      priority: taskToUpdate.priority,
-      status: taskToUpdate.status,
-      progress: taskToUpdate.progress,
-    });
-    setCurrentUpdateId(id); // Set the current task ID to be updated
+    if (taskToUpdate) {
+      setTodo({ ...taskToUpdate });
+      setCurrentUpdateId(id);
+    }
   };
 
   const handleSaveUpdate = async () => {
     try {
-      const updatedTask = { ...todo };
       const response = await axios.put(
         `http://localhost:5000/tasks/${currentUpdateId}`,
-        updatedTask
+        todo
       );
-      setTodos(
-        todos.map((task) =>
-          task._id === currentUpdateId ? { ...task, ...response.data } : task
-        )
+      const updatedTasks = todos.map((task) =>
+        task._id === currentUpdateId ? { ...task, ...response.data } : task
       );
-      // Reset state after update
-      setTodo({
-        title: "",
-        description: "",
-        date: "",
-        priority: "Medium",
-        status: "Pending",
-        progress: "0%",
-      });
-      setCurrentUpdateId(null); // Reset the update ID
+      setTodos(updatedTasks);
+      saveToLocalStorage(updatedTasks);
+      resetForm();
     } catch (error) {
       console.error("Error updating task:", error);
     }
+  };
+
+  const resetForm = () => {
+    setTodo({
+      title: "",
+      description: "",
+      date: "",
+      priority: "Medium",
+      status: "Pending",
+      progress: "0%",
+    });
+    setCurrentUpdateId(null);
   };
 
   const filteredTodos = todos.filter((item) => {
@@ -109,7 +113,6 @@ const Home = () => {
     return matchSearch && matchPriority;
   });
 
-  // Function to determine status color
   const getStatusColor = (status) => {
     switch (status) {
       case "Pending":
@@ -123,7 +126,6 @@ const Home = () => {
     }
   };
 
-  // Function to calculate progress width
   const getProgressWidth = (progress) => {
     const progressValue = parseInt(progress);
     return isNaN(progressValue) ? 0 : progressValue;
@@ -131,7 +133,7 @@ const Home = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Left Sidebar */}
+      {/* Sidebar */}
       <div className="w-full max-w-sm bg-blue-600 border-r border-blue-500 p-6 space-y-6 shadow-inner">
         <h2 className="text-2xl font-semibold mb-2 text-white">
           {currentUpdateId ? "Update Task" : "Add Task"}
@@ -200,14 +202,14 @@ const Home = () => {
           {currentUpdateId ? "Save Update" : "Save Task"}
         </button>
 
-        {/* Search and Filter */}
+        {/* Search & Filter */}
         <div className="border-t pt-4 space-y-4">
           <input
             type="text"
             placeholder="Search Task"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md transition-all duration-300 focus:ring-2 focus:ring-blue-300"
+            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300"
           />
 
           <select
@@ -223,7 +225,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Right Panel - Task Table */}
+      {/* Task Table */}
       <div className="flex-1 p-6 overflow-auto">
         <h1 className="text-2xl font-bold mb-4">Task Manager</h1>
 
@@ -254,7 +256,7 @@ const Home = () => {
                     <td className="py-2 px-4">{task.description}</td>
                     <td className="py-2 px-4">
                       <span className="inline-block py-1 px-2 text-sm font-semibold rounded-full bg-gray-200">
-                        {task.date}
+                        {new Date(task.date).toLocaleDateString("en-GB")}
                       </span>
                     </td>
                     <td className="py-2 px-4">
@@ -297,7 +299,6 @@ const Home = () => {
                         {task.priority}
                       </span>
                     </td>
-
                     <td className="py-2 px-4">
                       <button
                         onClick={() => handleDelete(task._id)}
