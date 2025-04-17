@@ -43,7 +43,7 @@ function Register() {
     try {
       // Send POST request to the backend to register the user
       const response = await axios.post(
-        "http://localhost:5000/register",
+        "https://todo-application-uvwv.onrender.com/register",
         formData
       );
 
