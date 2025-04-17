@@ -12,18 +12,14 @@ const Home = () => {
   });
 
   const [todos, setTodos] = useState([]);
-  const [search, setSearch] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("All");
   const [currentUpdateId, setCurrentUpdateId] = useState(null);
 
   const LOCAL_STORAGE_KEY = "myTaskList";
 
-  // Save tasks to local storage
   const saveToLocalStorage = (tasks) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
   };
 
-  // Fetch tasks from API or localStorage
   const fetchTasks = async () => {
     try {
       const response = await axios.get("http://localhost:5000/api/tasks");
@@ -106,36 +102,11 @@ const Home = () => {
     setCurrentUpdateId(null);
   };
 
-  const filteredTodos = todos.filter((item) => {
-    const matchSearch = item.title.toLowerCase().includes(search.toLowerCase());
-    const matchPriority =
-      priorityFilter === "All" || item.priority === priorityFilter;
-    return matchSearch && matchPriority;
-  });
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-500 text-white";
-      case "In Progress":
-        return "bg-blue-500 text-white";
-      case "Completed":
-        return "bg-green-500 text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
-  };
-
-  const getProgressWidth = (progress) => {
-    const progressValue = parseInt(progress);
-    return isNaN(progressValue) ? 0 : progressValue;
-  };
-
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="w-full max-w-sm bg-blue-600 border-r border-blue-500 p-6 space-y-6 shadow-inner">
-        <h2 className="text-2xl font-semibold mb-2 text-white">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50 text-gray-800">
+      {/* Sidebar Form */}
+      <div className="w-full md:w-1/3 p-6 border-r border-gray-300 bg-white">
+        <h2 className="text-xl font-semibold mb-4">
           {currentUpdateId ? "Update Task" : "Add Task"}
         </h2>
 
@@ -145,7 +116,7 @@ const Home = () => {
           placeholder="Title"
           value={todo.title}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
+          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded"
         />
 
         <textarea
@@ -153,7 +124,7 @@ const Home = () => {
           placeholder="Description"
           value={todo.description}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
+          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded"
         />
 
         <input
@@ -161,14 +132,14 @@ const Home = () => {
           name="date"
           value={todo.date}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
+          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded"
         />
 
         <select
           name="priority"
           value={todo.priority}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
+          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded"
         >
           <option value="High">High</option>
           <option value="Medium">Medium</option>
@@ -179,146 +150,71 @@ const Home = () => {
           name="status"
           value={todo.status}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
+          className="w-full mb-4 px-4 py-2 border border-gray-300 rounded"
         >
           <option value="Pending">Pending</option>
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
         </select>
 
-        <input
-          type="text"
-          name="progress"
-          placeholder="Progress (e.g., 30%)"
-          value={todo.progress}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md"
-        />
-
         <button
           onClick={currentUpdateId ? handleSaveUpdate : handleAddTodo}
-          className="w-full bg-white text-black py-2 rounded "
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
         >
           {currentUpdateId ? "Save Update" : "Save Task"}
         </button>
-
-        {/* Search & Filter */}
-        <div className="border-t pt-4 space-y-4">
-          <input
-            type="text"
-            placeholder="Search Task"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300"
-          />
-
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-          >
-            <option value="All">Filter by Priority</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-        </div>
       </div>
 
       {/* Task Table */}
       <div className="flex-1 p-6 overflow-auto">
-        <h1 className="text-2xl font-bold mb-4">Task Manager</h1>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white rounded-xl shadow">
-            <thead className="bg-gray-200 text-gray-700">
+        <h1 className="text-2xl font-bold mb-4">Task List</h1>
+        <table className="w-full bg-white border border-gray-300 rounded shadow">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="py-2 px-4 text-left">Title</th>
+              <th className="py-2 px-4 text-left">Description</th>
+              <th className="py-2 px-4 text-left">Date</th>
+              <th className="py-2 px-4 text-left">Status</th>
+              <th className="py-2 px-4 text-left">Priority</th>
+              <th className="py-2 px-4 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {todos.length === 0 ? (
               <tr>
-                <th className="py-3 px-4 text-left">Title</th>
-                <th className="py-3 px-4 text-left">Description</th>
-                <th className="py-3 px-4 text-left">Date</th>
-                <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Progress</th>
-                <th className="py-3 px-4 text-left">Priority</th>
-                <th className="py-3 px-4 text-left">Actions</th>
+                <td colSpan="6" className="text-center py-4 text-gray-500">
+                  No tasks available.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredTodos.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center p-4 text-gray-500">
-                    No tasks found.
+            ) : (
+              todos.map((task) => (
+                <tr key={task._id} className="border-t hover:bg-gray-50">
+                  <td className="py-2 px-4">{task.title}</td>
+                  <td className="py-2 px-4">{task.description}</td>
+                  <td className="py-2 px-4">
+                    {new Date(task.date).toLocaleDateString("en-GB")}
+                  </td>
+                  <td className="py-2 px-4">{task.status}</td>
+                  <td className="py-2 px-4">{task.priority}</td>
+                  <td className="py-2 px-4 space-x-2">
+                    <button
+                      onClick={() => handleUpdate(task._id)}
+                      className="bg-yellow-400 px-3 py-1 rounded text-sm"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={() => handleDelete(task._id)}
+                      className="bg-red-400 px-3 py-1 rounded text-sm"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
-              ) : (
-                filteredTodos.map((task) => (
-                  <tr key={task._id} className="border-b">
-                    <td className="py-2 px-4">{task.title}</td>
-                    <td className="py-2 px-4">{task.description}</td>
-                    <td className="py-2 px-4">
-                      <span className="inline-block py-1 px-2 text-sm font-semibold rounded-full bg-gray-200">
-                        {new Date(task.date).toLocaleDateString("en-GB")}
-                      </span>
-                    </td>
-                    <td className="py-2 px-4">
-                      <span
-                        className={`inline-block py-1 px-2 text-sm font-semibold rounded-full ${getStatusColor(
-                          task.status
-                        )}`}
-                      >
-                        {task.status}
-                      </span>
-                    </td>
-                    <td className="py-2 px-4">
-                      <div className="h-2 w-full bg-gray-200 rounded-full">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${getProgressWidth(task.progress)}%`,
-                            backgroundColor:
-                              task.priority === "High"
-                                ? "red"
-                                : task.priority === "Medium"
-                                ? "orange"
-                                : "green",
-                          }}
-                        ></div>
-                      </div>
-                    </td>
-                    <td className="py-2 px-4">
-                      <span
-                        className={`inline-block py-1 px-3 text-sm font-semibold rounded-full ${
-                          task.priority === "High"
-                            ? "bg-red-500 text-white"
-                            : task.priority === "Medium"
-                            ? "bg-orange-500 text-white"
-                            : task.priority === "Low"
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-500 text-white"
-                        }`}
-                      >
-                        {task.priority}
-                      </span>
-                    </td>
-                    <td className="py-2 px-4">
-                      <button
-                        onClick={() => handleDelete(task._id)}
-                        className="bg-red-500 text-white py-1 px-3 rounded mr-2"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => handleUpdate(task._id)}
-                        className="bg-yellow-500 text-white py-1 px-3 rounded"
-                      >
-                        Update
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
