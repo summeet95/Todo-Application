@@ -22,7 +22,7 @@ const Home = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/tasks");
+      const response = await axios.get("https://todo-application-uvwv.onrender.com/api/tasks");
       setTodos(response.data);
       saveToLocalStorage(response.data);
     } catch (error) {
@@ -44,7 +44,7 @@ const Home = () => {
 
   const handleAddTodo = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/tasks", todo);
+      const response = await axios.post("https://todo-application-uvwv.onrender.com/tasks", todo);
       const updatedTasks = [...todos, response.data];
       setTodos(updatedTasks);
       saveToLocalStorage(updatedTasks);
@@ -56,7 +56,7 @@ const Home = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/tasks/${id}`);
+      await axios.delete(`https://todo-application-uvwv.onrender.com/tasks/${id}`);
       const updatedTasks = todos.filter((task) => task._id !== id);
       setTodos(updatedTasks);
       saveToLocalStorage(updatedTasks);
@@ -76,7 +76,7 @@ const Home = () => {
   const handleSaveUpdate = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/tasks/${currentUpdateId}`,
+        `https://todo-application-uvwv.onrender.com/tasks/${currentUpdateId}`,
         todo
       );
       const updatedTasks = todos.map((task) =>
